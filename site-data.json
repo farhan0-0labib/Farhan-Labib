@@ -1,0 +1,34 @@
+{
+  "name": "Farhan Labib",
+  "tagline": "A little space about me, my work, and my thoughts.",
+  "photo": "",
+  "aboutTitle": "About Me",
+  "aboutText": "Hello! I’m Farhan Labib. This is my personal website. Add your introduction, interests, education, and projects from the Decap CMS Admin Panel.",
+  "email": "hello@example.com",
+  "location": "Bangladesh",
+  "socials": [
+    {
+      "name": "Facebook",
+      "url": "https://facebook.com/",
+      "label": "Follow on Facebook"
+    },
+    {
+      "name": "Instagram",
+      "url": "https://instagram.com/",
+      "label": "Follow on Instagram"
+    },
+    {
+      "name": "YouTube",
+      "url": "https://youtube.com/",
+      "label": "Watch on YouTube"
+    }
+  ],
+  "posts": [
+    {
+      "title": "Welcome to my blog",
+      "date": "2026-10-14T00:00:00.000Z",
+      "slug": "welcome-to-my-blog",
+      "body": "This is your first blog post. Open the Decap CMS Admin Panel to edit it or create more posts."
+    }
+  ]
+}

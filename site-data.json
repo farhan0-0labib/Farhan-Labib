@@ -2,7 +2,7 @@
   "socials": [
     {
       "name": "Facebook",
-      "url": "https://facebook.com/",
+      "url": "https://www.facebook.com/share/1QGV3ShzhS/",
       "label": "Follow on Facebook"
     },
     {
@@ -22,12 +22,6 @@
   "photo": "",
   "posts": [
     {
-      "title": "Welcome to my blog",
-      "date": "2026-10-14T00:00:00.000Z",
-      "slug": "welcome-to-my-blog",
-      "body": "This is your first blog post. Open the Decap CMS Admin Panel to edit it or create more posts."
-    },
-    {
       "title": "First Launching",
       "date": "2026-10-14T17:57:00.000+06:00",
       "slug": "first-launching",
@@ -36,5 +30,5 @@
   ],
   "location": "Bangladesh",
   "aboutText": "## **Hello! I’m Farhan Labib. This is my personal website**.\n\n\n\n\n\nEducation:\n\nMy academic journey has been shaped by a strong foundation in Dinajpur, leading me to my current studies in Dhaka.\n\n\n\nI continued my higher secondary studies at Ideal Residential Model School, Chirirbandar, Dinajpur, and passed SSC as a proud member of the Class of 2026 (Batch 2K26)\n\n\n\nCurrently, I am pursuing my higher education at Dhaka College, having started my academic session there on September 24, 2026.",
-  "email": "hello@example.com"
+  "email": "contact@farhanlabib.dpdns.com"
 }

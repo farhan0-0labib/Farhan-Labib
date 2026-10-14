@@ -2,18 +2,39 @@ backend:
   name: github
   repo: farhan0-0labib/Farhan-Labib
   branch: main
-  base_url: https://decap-oauth.farhanlabib5225.workers.dev
-  auth_endpoint: /auth
 
 media_folder: "images/uploads"
 public_folder: "/images/uploads"
 
 collections:
-  - name: "blog"
-    label: "Blog"
-    folder: "_posts"
-    create: true
-    fields:
-      - {label: "Title", name: "title", widget: "string"}
-      - {label: "Publish Date", name: "date", widget: "datetime"}
-      - {label: "Body", name: "body", widget: "markdown"}
+  - name: "site_content"
+    label: "Website Content"
+    files:
+      - name: "site"
+        label: "Site Settings & Pages"
+        file: "site-data.json"
+        fields:
+          - { label: "Website Name", name: "name", widget: "string" }
+          - { label: "Home Tagline", name: "tagline", widget: "string" }
+          - { label: "Profile Photo", name: "photo", widget: "image", required: false }
+          - { label: "About Page Title", name: "aboutTitle", widget: "string" }
+          - { label: "About Page Text", name: "aboutText", widget: "markdown" }
+          - { label: "Email Address", name: "email", widget: "string" }
+          - { label: "Location", name: "location", widget: "string", required: false }
+          - label: "Social Media Links"
+            name: "socials"
+            widget: "list"
+            summary: "{{fields.name}}"
+            fields:
+              - { label: "Platform Name", name: "name", widget: "string" }
+              - { label: "Profile URL", name: "url", widget: "string" }
+              - { label: "Short Description", name: "label", widget: "string", required: false }
+          - label: "Blog Posts"
+            name: "posts"
+            widget: "list"
+            summary: "{{fields.title}}"
+            fields:
+              - { label: "Post Title", name: "title", widget: "string" }
+              - { label: "Publish Date", name: "date", widget: "datetime" }
+              - { label: "URL Slug (unique)", name: "slug", widget: "string" }
+              - { label: "Post Body", name: "body", widget: "markdown" }

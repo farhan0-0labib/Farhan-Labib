@@ -65,4 +65,5 @@ async function sendTelegramMessage(text) {
     }
 }
 
+sendTelegramMessage("Its a test message")
 checkRoutine();

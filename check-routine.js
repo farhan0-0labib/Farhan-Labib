@@ -8,10 +8,8 @@ const now = new Date(dhakaTime);
 const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const todayDayName = daysOfWeek[now.getDay()];
 
-// বর্তমান সময় HH:MM ফরম্যাটে (যেমন 16:30)
-const currentHour = now.getHours().toString().padStart(2, '0');
-const currentMinute = now.getMinutes().toString().padStart(2, '0');
-const currentTime = `${currentHour}:${currentMinute}`;
+// বর্তমান সময় মিনিটে রূপান্তর (যেমন 10:15 = 615 মিনিট)
+const currentMinutes = (now.getHours() * 60) + now.getMinutes();
 
 async function checkRoutine() {
     const routinePath = path.join(__dirname, '_routine');
@@ -20,13 +18,12 @@ async function checkRoutine() {
 
     const files = fs.readdirSync(routinePath);
     
-    // আজকের দিনের ফাইলটি খোঁজা (যেমন: Friday.md)
+    // আজকের দিনের ফাইলটি খোঁজা
     const todayFile = files.find(f => f.toLowerCase().includes(todayDayName.toLowerCase()));
 
     if (todayFile) {
         const content = fs.readFileSync(path.join(routinePath, todayFile), 'utf8');
         
-        // YAML ফরম্যাট থেকে ডেটা বের করা
         const frontmatter = content.split('---')[1];
         if (!frontmatter) return;
 
@@ -39,8 +36,14 @@ async function checkRoutine() {
             const subject = subjectMatch[1].trim();
             const eventTime = eventTimeMatch[1].trim();
 
-            // যদি বর্তমান সময় এবং নোটিফিকেশন টাইম মিলে যায়
-            if (currentTime === notifyTime) {
+            // নোটিফিকেশন টাইমকে মিনিটে রূপান্তর
+            const timeParts = notifyTime.split(':');
+            const notifyMinutes = (parseInt(timeParts[0]) * 60) + parseInt(timeParts[1]);
+
+            // 🌟 আসল ম্যাজিক এখানে: বর্তমান সময় এবং নোটিফিকেশন টাইমের ব্যবধান ০ থেকে ১৫ মিনিটের মধ্যে হলে মেসেজ যাবে
+            const timeDifference = currentMinutes - notifyMinutes;
+
+            if (timeDifference >= 0 && timeDifference < 15) {
                 const message = `🔔 **Routine Reminder**\n\nআজকে তোমার এই প্রাইভেট রুটিন আছে:\n**বিষয়:** ${subject}\n**সময়:** ${eventTime}`;
                 await sendTelegramMessage(message);
             }
@@ -65,5 +68,4 @@ async function sendTelegramMessage(text) {
     }
 }
 
-sendTelegramMessage("Its a test message")
 checkRoutine();

@@ -4,59 +4,47 @@ const path = require('path');
 // বাংলাদেশের সময় বের করা
 const dhakaTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Dhaka"});
 const now = new Date(dhakaTime);
-const todayDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
-const day = now.getDay(); // 0 = Sun, 1 = Mon ... 5 = Fri, 6 = Sat
+
+const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const todayDayName = daysOfWeek[now.getDay()];
+
+// বর্তমান সময় HH:MM ফরম্যাটে (যেমন 16:30)
+const currentHour = now.getHours().toString().padStart(2, '0');
+const currentMinute = now.getMinutes().toString().padStart(2, '0');
+const currentTime = `${currentHour}:${currentMinute}`;
 
 async function checkRoutine() {
     const routinePath = path.join(__dirname, '_routine');
     
-    // ফোল্ডার না থাকলে বের হয়ে যাও
     if (!fs.existsSync(routinePath)) return;
 
     const files = fs.readdirSync(routinePath);
-    let message = "";
-
-    // আপনার কাস্টম শিডিউল লজিক
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
     
-    let shouldSend = false;
+    // আজকের দিনের ফাইলটি খোঁজা (যেমন: Friday.md)
+    const todayFile = files.find(f => f.toLowerCase().includes(todayDayName.toLowerCase()));
 
-    if (day !== 5) { // শুক্রবার ছাড়া অন্য দিন
-        // দুপুর ৪:৩০ (16:30) এবং রাত ১২:০০ (00:00)
-        if ((currentHour === 16 && currentMinute === 30) || (currentHour === 0 && currentMinute === 0)) {
-            shouldSend = true;
-        }
-    } else { // শুক্রবার
-        // শুক্রবার সকাল ৮:০০ (08:00)
-        if (currentHour === 8 && currentMinute === 0) {
-            shouldSend = true;
-        }
-    }
-
-    // বৃহস্পতিবার রাত ৯:০০ (21:00) - শুক্রবারের রুটিনের জন্য
-    let targetDate = todayDate;
-    if (day === 4 && currentHour === 21 && currentMinute === 0) {
-        shouldSend = true;
-        // আগামীকালের তারিখ (শুক্রবার) সেট করা
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        targetDate = tomorrow.toISOString().split('T')[0];
-    }
-
-    if (shouldSend) {
-        const targetFile = files.find(f => f.includes(targetDate));
+    if (todayFile) {
+        const content = fs.readFileSync(path.join(routinePath, todayFile), 'utf8');
         
-        if (targetFile) {
-            const content = fs.readFileSync(path.join(routinePath, targetFile), 'utf8');
-            // Markdown frontmatter বাদ দিয়ে শুধু মূল লেখা নেওয়া
-            const body = content.split('---')[2] || "কোনো বিস্তারিত নেই";
-            message = `🔔 **Routine Reminder**\n\nআজকে তোমার এই প্রাইভেট রুটিন আছে:\n\n${body.trim()}`;
-        }
-    }
+        // YAML ফরম্যাট থেকে ডেটা বের করা
+        const frontmatter = content.split('---')[1];
+        if (!frontmatter) return;
 
-    if (message) {
-        await sendTelegramMessage(message);
+        const notifyTimeMatch = frontmatter.match(/notify_time:\s*"?([^"\n]+)"?/);
+        const subjectMatch = frontmatter.match(/subject:\s*"?([^"\n]+)"?/);
+        const eventTimeMatch = frontmatter.match(/event_time:\s*"?([^"\n]+)"?/);
+
+        if (notifyTimeMatch && subjectMatch && eventTimeMatch) {
+            const notifyTime = notifyTimeMatch[1].trim();
+            const subject = subjectMatch[1].trim();
+            const eventTime = eventTimeMatch[1].trim();
+
+            // যদি বর্তমান সময় এবং নোটিফিকেশন টাইম মিলে যায়
+            if (currentTime === notifyTime) {
+                const message = `🔔 **Routine Reminder**\n\nআজকে তোমার এই প্রাইভেট রুটিন আছে:\n**বিষয়:** ${subject}\n**সময়:** ${eventTime}`;
+                await sendTelegramMessage(message);
+            }
+        }
     }
 }
 
@@ -66,7 +54,7 @@ async function sendTelegramMessage(text) {
     const url = `https://api.telegram.org/bot${token}/sendMessage`;
 
     try {
-        const response = await fetch(url, {
+        await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'Markdown' })

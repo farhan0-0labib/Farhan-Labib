@@ -42,10 +42,13 @@ collections:
               - { label: "Post Body", name: "body", widget: "markdown" }
 
   - name: "routine"
-    label: "My Routine"
+    label: "Weekly Routine"
     folder: "_routine"
     create: true
-    slug: "{{year}}-{{month}}-{{day}}"
+    slug: "{{fields.day}}" # দিনের নামেই ফাইল সেভ হবে
     fields:
-      - { label: "Date", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
-      - { label: "Routine Details", name: "body", widget: "markdown", hint: "আজকের রুটিন এখানে লিখুন" }
+      - {label: "Day of the Week", name: "day", widget: "select", options: ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]}
+      - {label: "Subject", name: "subject", widget: "string"}
+      - {label: "Event Time (24h format)", name: "event_time", widget: "string", hint: "যেমন: 16:30"}
+      - {label: "Notification Time (24h format)", name: "notify_time", widget: "string", hint: "যেমন: 16:00"}
+      - {label: "Details (Optional)", name: "body", widget: "markdown", required: false}

@@ -38,3 +38,28 @@ collections:
               - { label: "Publish Date", name: "date", widget: "datetime" }
               - { label: "URL Slug (unique)", name: "slug", widget: "string" }
               - { label: "Post Body", name: "body", widget: "markdown" }
+name: Routine Telegram Alert
+
+on:
+  schedule:
+    # প্রতি ৩০ মিনিট পর পর চেক করবে
+    - cron: '*/30 * * * *'
+  workflow_dispatch: # ম্যানুয়ালি চালানোর জন্য
+
+jobs:
+  send-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+
+      - name: Run Telegram Bot Script
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: node check-routine.js

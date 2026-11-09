@@ -63,3 +63,11 @@ jobs:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: node check-routine.js
+        - name: "routine"
+  label: "My Routine"
+  folder: "_routine"
+  create: true
+  slug: "{{year}}-{{month}}-{{day}}"
+  fields:
+    - { label: "Date", name: "date", widget: "datetime", format: "YYYY-MM-DD" }
+    - { label: "Routine Details", name: "body", widget: "markdown", hint: "আজকের রুটিন এখানে লিখুন" }

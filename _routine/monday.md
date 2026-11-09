@@ -1,7 +1,7 @@
 ---
 day: Monday
 subject: Nothing
-event_time: 21:13
-notify_time: 21:20
+event_time: 22:30
+notify_time: 22:00
 ---
 nothing

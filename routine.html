@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Routine | Farhan Labib</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; }
+        .routine-card { background: #e9ecef; padding: 15px; margin-bottom: 15px; border-left: 5px solid #007bff; border-radius: 4px; }
+        .routine-card h3 { margin: 0 0 10px 0; color: #007bff; }
+        .routine-card p { margin: 5px 0; color: #555; }
+        .time-badge { background: #28a745; color: white; padding: 3px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Weekly Routine</h1>
+        <div id="routine-list">Loading...</div>
+    </div>
+
+    <script>
+        // আপনার GitHub ইউজারনেম এবং রিপো
+        const user = "farhan0-0labib";
+        const repo = "Farhan-Labib";
+
+        async function loadRoutine() {
+            const listDiv = document.getElementById('routine-list');
+            try {
+                // GitHub API দিয়ে _routine ফোল্ডারের ফাইল লিস্ট আনা
+                const response = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/_routine`);
+                const files = await response.json();
+
+                if (files.length === 0) {
+                    listDiv.innerHTML = "<p>No routine found.</p>";
+                    return;
+                }
+
+                listDiv.innerHTML = ""; // লোডিং টেক্সট মুছে ফেলা
+
+                for (let file of files) {
+                    // প্রতিটি ফাইলের ডেটা আনা
+                    const fileRes = await fetch(file.download_url);
+                    const text = await fileRes.text();
+                    
+                    // YAML Frontmatter থেকে ডেটা বের করা
+                    const parts = text.split('---');
+                    const frontmatter = parts[1];
+                    const body = parts[2] ? parts[2].trim() : "No details";
+
+                    const day = frontmatter.match(/day:\s*(.*)/)[1].trim();
+                    const subject = frontmatter.match(/subject:\s*(.*)/)[1].trim();
+                    const eventTime = frontmatter.match(/event_time:\s*(.*)/)[1].trim();
+
+                    // HTML তৈরি করা
+                    const card = document.createElement('div');
+                    card.className = 'routine-card';
+                    card.innerHTML = `
+                        <h3>${day}</h3>
+                        <p><strong>Subject:</strong> ${subject}</p>
+                        <p><span class="time-badge">Time: ${eventTime}</span></p>
+                        <p><em>${body}</em></p>
+                    `;
+                    listDiv.appendChild(card);
+                }
+            } catch (error) {
+                listDiv.innerHTML = "<p style='color:red;'>Failed to load routine.</p>";
+            }
+        }
+
+        loadRoutine();
+    </script>
+</body>
+</html>

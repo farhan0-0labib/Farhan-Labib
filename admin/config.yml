@@ -49,6 +49,7 @@ collections:
     fields:
       - {label: "Day of the Week", name: "day", widget: "select", options: ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]}
       - {label: "Subject", name: "subject", widget: "string"}
-      - {label: "Event Time (24h format)", name: "event_time", widget: "string", hint: "যেমন: 16:30"}
-      - {label: "Notification Time (24h format)", name: "notify_time", widget: "string", hint: "যেমন: 16:00"}
+      # এখানে datetime ব্যবহার করা হয়েছে যাতে অ্যাডমিন প্যানেলে ঘড়ি (Time Picker) আসে
+      - {label: "Event Time", name: "event_time", widget: "datetime", format: "HH:mm", time_format: "HH:mm", date_format: false, default: ""}
+      - {label: "Notification Time", name: "notify_time", widget: "datetime", format: "HH:mm", time_format: "HH:mm", date_format: false, default: ""}
       - {label: "Details (Optional)", name: "body", widget: "markdown", required: false}

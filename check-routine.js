@@ -1,27 +1,30 @@
 const fs = require('fs');
 const path = require('path');
 
-// বাংলাদেশের সময় বের করা
-const dhakaTime = new Date().toLocaleString("en-US", {timeZone: "Asia/Dhaka"});
-const now = new Date(dhakaTime);
+// নিখুঁতভাবে বাংলাদেশের সময় বের করা
+const options = { timeZone: 'Asia/Dhaka', hour12: false, hour: '2-digit', minute: '2-digit', weekday: 'long' };
+const formatter = new Intl.DateTimeFormat('en-US', options);
+const parts = formatter.formatToParts(new Date());
+const currentHour = parseInt(parts.find(p => p.type === 'hour').value);
+const currentMinute = parseInt(parts.find(p => p.type === 'minute').value);
+const todayDayName = parts.find(p => p.type === 'weekday').value;
+const currentMinutes = (currentHour * 60) + currentMinute;
 
-const daysOfWeek = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const todayDayName = daysOfWeek[now.getDay()];
-
-// বর্তমান সময় মিনিটে রূপান্তর (যেমন 10:15 = 615 মিনিট)
-const currentMinutes = (now.getHours() * 60) + now.getMinutes();
+console.log(`Checking Routine for: ${todayDayName}, Time: ${currentHour}:${currentMinute}`);
 
 async function checkRoutine() {
     const routinePath = path.join(__dirname, '_routine');
     
-    if (!fs.existsSync(routinePath)) return;
+    if (!fs.existsSync(routinePath)) {
+        console.log("Routine folder not found!");
+        return;
+    }
 
     const files = fs.readdirSync(routinePath);
-    
-    // আজকের দিনের ফাইলটি খোঁজা
     const todayFile = files.find(f => f.toLowerCase().includes(todayDayName.toLowerCase()));
 
     if (todayFile) {
+        console.log(`Found file: ${todayFile}`);
         const content = fs.readFileSync(path.join(routinePath, todayFile), 'utf8');
         
         const frontmatter = content.split('---')[1];
@@ -36,18 +39,24 @@ async function checkRoutine() {
             const subject = subjectMatch[1].trim();
             const eventTime = eventTimeMatch[1].trim();
 
-            // নোটিফিকেশন টাইমকে মিনিটে রূপান্তর
             const timeParts = notifyTime.split(':');
             const notifyMinutes = (parseInt(timeParts[0]) * 60) + parseInt(timeParts[1]);
 
-            // 🌟 আসল ম্যাজিক এখানে: বর্তমান সময় এবং নোটিফিকেশন টাইমের ব্যবধান ০ থেকে ১৫ মিনিটের মধ্যে হলে মেসেজ যাবে
             const timeDifference = currentMinutes - notifyMinutes;
 
-            if (timeDifference >= 0 && timeDifference < 15) {
+            console.log(`Notify Time: ${notifyTime} (${notifyMinutes} mins), Difference: ${timeDifference} mins`);
+
+            // যদি বর্তমান সময় এবং নোটিফিকেশন টাইমের ব্যবধান ০ থেকে ১৫ মিনিটের মধ্যে হয়
+            if (timeDifference >= 0 && timeDifference <= 15) {
+                console.log("Time matched! Sending message...");
                 const message = `🔔 **Routine Reminder**\n\nআজকে তোমার এই প্রাইভেট রুটিন আছে:\n**বিষয়:** ${subject}\n**সময়:** ${eventTime}`;
                 await sendTelegramMessage(message);
+            } else {
+                console.log("Time did not match. No message sent.");
             }
         }
+    } else {
+        console.log(`No routine file found for ${todayDayName}`);
     }
 }
 

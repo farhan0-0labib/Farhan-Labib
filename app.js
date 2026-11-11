@@ -32,7 +32,7 @@ function markdown(text) {
 }
 function nav(){
   const current = location.pathname.split('/').pop() || 'index.html';
-  const links = [['Home','index.html'],['About','about.html'],['Social Media','social.html'],['Blog','blog.html'],['Contact','contact.html']];
+  const links = [['Home','index.html'],['About','about.html'],['Social Media','social.html'],['Blog','blog.html'],['Contact','contact.html'],['Routine','routine.html']];
   return `<header><nav><a class="brand" href="index.html">${esc((siteData.name||'Farhan').split(' ')[0])}<span>.</span></a><div class="navlinks">${links.map(([label,url])=>`<a class="${current===url?'active':''}" href="${url}">${label}</a>`).join('')}</div></nav></header>`;
 }
 function footer(){ return `<footer>© ${new Date().getFullYear()} ${esc(siteData.name)} · Made with care</footer>`; }

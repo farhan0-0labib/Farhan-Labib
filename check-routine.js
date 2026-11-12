@@ -1,7 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 
-const WINDOW_MINUTES = 20;          // how late (after notify_time) a run may still send
+const WINDOW_MINUTES = 60;          // how late (after notify_time) a run may still send (safe: duplicates are blocked below)
+const SENT_DIR = path.join(__dirname, '.sent');   // markers of already-sent reminders (kept between runs via Actions cache)
 const FORCE_TEST = process.env.FORCE_TEST === 'true';
 
 // Current time in Bangladesh
@@ -9,6 +10,7 @@ const formatter = new Intl.DateTimeFormat('en-US', {
   timeZone: 'Asia/Dhaka', hourCycle: 'h23', hour: '2-digit', minute: '2-digit', weekday: 'long'
 });
 const parts = formatter.formatToParts(new Date());
+const dateStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Dhaka' }).format(new Date()); // YYYY-MM-DD
 const currentHour = parseInt(parts.find(p => p.type === 'hour').value, 10) % 24;
 const currentMinute = parseInt(parts.find(p => p.type === 'minute').value, 10);
 const todayDayName = parts.find(p => p.type === 'weekday').value;
@@ -60,35 +62,47 @@ async function checkRoutine() {
     return;
   }
 
+  fs.mkdirSync(SENT_DIR, { recursive: true });
+  for (const m of fs.readdirSync(SENT_DIR)) {      // drop markers from previous days
+    if (!m.startsWith(dateStr)) fs.unlinkSync(path.join(SENT_DIR, m));
+  }
+
   const routinePath = path.join(__dirname, '_routine');
   if (!fs.existsSync(routinePath)) { console.log('No _routine folder.'); return; }
 
-  const files = fs.readdirSync(routinePath);
-  const todayFile = files.find(f => f.toLowerCase().includes(todayDayName.toLowerCase()));
-  if (!todayFile) { console.log(`No routine file for ${todayDayName}.`); return; }
+  const files = fs.readdirSync(routinePath).filter(f => f.toLowerCase().includes(todayDayName.toLowerCase()));
+  if (!files.length) { console.log(`No routine file for ${todayDayName}.`); return; }
 
-  const content = fs.readFileSync(path.join(routinePath, todayFile), 'utf8').replace(/\r/g, '');
-  const frontmatter = content.split('---')[1];
-  if (!frontmatter) { console.log('No frontmatter found.'); return; }
+  for (const file of files) {                       // every file for today, e.g. wednesday.md AND wednesday-1.md
+    console.log(`--- ${file}`);
+    const content = fs.readFileSync(path.join(routinePath, file), 'utf8').replace(/\r/g, '');
+    const frontmatter = content.split('---')[1];
+    if (!frontmatter) { console.log('No frontmatter found.'); continue; }
 
-  const get = key => (frontmatter.match(new RegExp(`${key}:\\s*"?([^"\\n]+)"?`)) || [])[1];
-  const subject = get('subject'), rawEvent = get('event_time'), rawNotify = get('notify_time');
-  if (!subject || !rawEvent || !rawNotify) { console.log('Missing subject/event_time/notify_time.'); return; }
+    const get = key => (frontmatter.match(new RegExp(`${key}:\\s*"?([^"\\n]+)"?`)) || [])[1];
+    const subject = get('subject'), rawEvent = get('event_time'), rawNotify = get('notify_time');
+    if (!subject || !rawEvent || !rawNotify) { console.log('Missing subject/event_time/notify_time.'); continue; }
 
-  const notifyMinutes = parseTimeToMinutes(rawNotify);
-  const eventMinutes = parseTimeToMinutes(rawEvent);
-  if (notifyMinutes === null) { console.log(`Could not parse notify_time: ${rawNotify}`); return; }
+    const notifyMinutes = parseTimeToMinutes(rawNotify);
+    const eventMinutes = parseTimeToMinutes(rawEvent);
+    if (notifyMinutes === null) { console.log(`Could not parse notify_time: ${rawNotify}`); continue; }
 
-  const diff = currentMinutes - notifyMinutes;
-  console.log(`notify_time=${rawNotify} (${notifyMinutes} min), now=${currentMinutes} min, diff=${diff}`);
+    const diff = currentMinutes - notifyMinutes;
+    console.log(`notify_time=${rawNotify} (${notifyMinutes} min), now=${currentMinutes} min, diff=${diff}`);
 
-  if (diff >= 0 && diff <= WINDOW_MINUTES) {
-    const pad = n => String(n).padStart(2, '0');
-    const shown = eventMinutes === null ? rawEvent.trim()
-      : `${pad(Math.floor(eventMinutes / 60))}:${pad(eventMinutes % 60)}`;
-    await sendTelegramMessage(`🔔 Routine Reminder\n\nআজকে তোমার এই প্রাইভেট রুটিন আছে:\nবিষয়: ${subject.trim()}\nসময়: ${shown}`);
-  } else {
-    console.log('Outside notification window, nothing to send.');
+    const marker = path.join(SENT_DIR, `${dateStr}__${file}__${rawNotify.trim()}`.replace(/[^\w.-]/g, '_'));
+    if (fs.existsSync(marker)) { console.log('Already sent today, skipping.'); continue; }
+
+    if (diff >= 0 && diff <= WINDOW_MINUTES) {
+      const pad = n => String(n).padStart(2, '0');
+      const shown = eventMinutes === null ? rawEvent.trim()
+        : `${pad(Math.floor(eventMinutes / 60))}:${pad(eventMinutes % 60)}`;
+      await sendTelegramMessage(`🔔 Routine Reminder\n\nআজকে তোমার এই প্রাইভেট রুটিন আছে:\nবিষয়: ${subject.trim()}\nসময়: ${shown}`);
+      fs.writeFileSync(marker, new Date().toISOString());
+      if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'sent=true\n');
+    } else {
+      console.log('Outside notification window, nothing to send.');
+    }
   }
 }
 

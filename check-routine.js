@@ -40,12 +40,12 @@ async function sendTelegramMessage(text) {
     console.error('Missing TELEGRAM_TOKEN or TELEGRAM_CHAT_ID (check repo Settings > Secrets and variables > Actions).');
     process.exit(1);
   }
-  // Plain text on purpose: no parse_mode, so special characters can't break delivery.
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ chat_id: chatId, text })
-  });
+  // HTML ফরম্যাট ব্যবহার করা হচ্ছে যাতে বোল্ড ট্যাগ কাজ করে
+const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({ chat_id: chatId, text: text, parse_mode: 'HTML' }) // 🌟 এখানে parse_mode: 'HTML' যোগ করা হলো
+});
   const body = await res.text();
   if (!res.ok) {
     console.error(`Telegram rejected the message (HTTP ${res.status}): ${body}`);
@@ -97,7 +97,21 @@ async function checkRoutine() {
       const pad = n => String(n).padStart(2, '0');
       const shown = eventMinutes === null ? rawEvent.trim()
         : `${pad(Math.floor(eventMinutes / 60))}:${pad(eventMinutes % 60)}`;
-      await sendTelegramMessage(`🔔 Routine Reminder\n\nআজকে তোমার এই প্রাইভেট রুটিন আছে:\nবিষয়: ${subject.trim()}\nসময়: ${shown}`);
+      // Details বা Body অংশটুকু বের করা
+const body = content.split('---')[2] ? content.split('---')[2].trim() : "";
+
+// মেসেজটি সুন্দর করে সাজানো
+let messageText = `🔔 <b>Routine Reminder</b>\n\n`;
+messageText += `আজকে তোমার এই প্রাইভেট রুটিন আছে:\n\n`;
+messageText += `📚 <b>বিষয়:</b> ${subject.trim()}\n`;
+messageText += `⏰ <b>সময়:</b> ${shown}\n`;
+
+// যদি বিস্তারিত কিছু লেখা থাকে, তবে সেটাও যোগ হবে
+if (body) {
+    messageText += `\n📝 <b>বিস্তারিত:</b>\n${body}`;
+}
+
+await sendTelegramMessage(messageText);
       fs.writeFileSync(marker, new Date().toISOString());
       if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'sent=true\n');
     } else {

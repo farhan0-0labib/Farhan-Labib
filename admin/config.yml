@@ -23,6 +23,14 @@ collections:
           - { label: "About Page Text", name: "aboutText", widget: "markdown" }
           - { label: "Email Address", name: "email", widget: "string" }
           - { label: "Location", name: "location", widget: "string", required: false }
+          - { label: "Accent Color", name: "accent", widget: "color", required: false, default: "#8b5cf6" }
+          - { label: "Top Banner Text (leave empty to hide)", name: "announcement", widget: "string", required: false }
+          - { label: "Banner Link", name: "announcementLink", widget: "string", required: false }
+          - { label: "Typing Roles (home page)", name: "roles", widget: "list", required: false, summary: "{{fields.role}}", field: { label: "Role", name: "role", widget: "string" } }
+          - { label: "Extra Stats", name: "stats", widget: "list", required: false, summary: "{{fields.value}} {{fields.label}}", fields: [ { label: "Value", name: "value", widget: "string" }, { label: "Label", name: "label", widget: "string" } ] }
+          - { label: "Skills", name: "skills", widget: "list", required: false, summary: "{{fields.name}}", fields: [ { label: "Skill", name: "name", widget: "string" }, { label: "Level (0-100)", name: "level", widget: "number", value_type: "int", min: 0, max: 100 } ] }
+          - { label: "Projects", name: "projects", widget: "list", required: false, summary: "{{fields.title}}", fields: [ { label: "Title", name: "title", widget: "string" }, { label: "Description", name: "description", widget: "text" }, { label: "Link", name: "link", widget: "string", required: false }, { label: "Image", name: "image", widget: "image", required: false }, { label: "Tags", name: "tags", widget: "list", required: false } ] }
+          - { label: "Journey / Timeline", name: "timeline", widget: "list", required: false, summary: "{{fields.year}} {{fields.title}}", fields: [ { label: "Year / Date", name: "year", widget: "string" }, { label: "Title", name: "title", widget: "string" }, { label: "Details", name: "text", widget: "text", required: false } ] }
           - label: "Social Media Links"
             name: "socials"
             widget: "list"
@@ -39,6 +47,8 @@ collections:
               - { label: "Post Title", name: "title", widget: "string" }
               - { label: "Publish Date", name: "date", widget: "datetime" }
               - { label: "URL Slug (unique)", name: "slug", widget: "string" }
+              - { label: "Cover Image", name: "cover", widget: "image", required: false }
+              - { label: "Tags", name: "tags", widget: "list", required: false }
               - { label: "Post Body", name: "body", widget: "markdown" }
 
   - name: "routine"

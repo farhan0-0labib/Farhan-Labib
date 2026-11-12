@@ -10,6 +10,10 @@ on:
         type: boolean
         default: false
 
+concurrency:
+  group: routine-alert
+  cancel-in-progress: false
+
 jobs:
   send-alert:
     runs-on: ubuntu-latest
@@ -18,9 +22,25 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Restore list of already-sent reminders
+        uses: actions/cache/restore@v4
+        with:
+          path: .sent
+          key: sent-${{ github.run_id }}
+          restore-keys: sent-
+
       - name: Run Telegram Bot Script
+        id: run
         env:
           TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           FORCE_TEST: ${{ inputs.test }}
         run: node check-routine.js
+
+      - name: Remember what was sent
+        if: steps.run.outputs.sent == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .sent
+          key: sent-${{ github.run_id }}

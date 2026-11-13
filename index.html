@@ -1,1 +1,40 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#090d1b"><title>Home · Farhan Labib</title><meta name="description" content="Personal website of Farhan Labib"><link rel="stylesheet" href="styles.css"></head><body data-page="home"><div id="app"><main class="wrap"><p class="muted">Loading website…</p></main></div><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#090d1b">
+  <title>Home · Farhan Labib</title>
+  <meta name="description" content="Personal website of Farhan Labib">
+  
+  <!-- PWA এর জন্য নতুন যোগ করা হলো -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="home">
+  <div id="app">
+    <main class="wrap">
+      <p class="muted">Loading website…</p>
+    </main>
+  </div>
+  
+  <script src="app.js"></script>
+  
+  <!-- Service Worker রেজিস্টার করার স্ক্রিপ্ট -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(registration => {
+            console.log('ServiceWorker registration successful');
+          })
+          .catch(err => {
+            console.log('ServiceWorker registration failed: ', err);
+          });
+      });
+    }
+  </script>
+</body>
+</html>

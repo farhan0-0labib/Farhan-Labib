@@ -28,10 +28,15 @@
       "name": "Instagram",
       "url": "https://instagram.com/",
       "label": "Follow on Instagram"
+    },
+    {
+      "name": "WhatsApp",
+      "url": "https://wa.me/qr/DFLFONAZDXTYD1",
+      "label": "Don't Call"
     }
   ],
   "announcement": "",
-  "accent": "#f65c5f",
+  "accent": "#7e5af4",
   "name": "Farhan Labib",
   "aboutTitle": "About Me",
   "tagline": "A little space about me, my work, and my thoughts.",

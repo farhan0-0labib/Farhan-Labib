@@ -29,7 +29,7 @@ const sortedPosts=()=>[...(siteData.posts||[])].sort((a,b)=>String(b.date).local
 
 function nav(){
   const cur=location.pathname.split('/').pop()||'index.html';
-  const links=[['Home','index.html'],['About','about.html'],['Attendance','attendance-cloud.html'],['Projects','projects.html'],['Blog','blog.html'],['Social','social.html'],['Routine','routine.html'],['Contact','contact.html']];
+  const links=[['Home','index.html'],['About','about.html'],['Projects','projects.html'],['Blog','blog.html'],['Social','social.html'],['Routine','routine.html'],['Contact','contact.html'],['Attendance','attendance-cloud.html']];
   return `${siteData.announcement?`<div class="banner">${esc(siteData.announcement)} ${siteData.announcementLink?`<a href="${esc(safeUrl(siteData.announcementLink))}">Learn more →</a>`:''}</div>`:''}
   <header><nav><a class="brand" href="index.html">${esc((siteData.name||'Farhan').split(' ')[0])}<span>.</span></a>
   <button class="icon-btn menu-btn" aria-label="Menu" onclick="document.querySelector('.navlinks').classList.toggle('open')">☰</button>

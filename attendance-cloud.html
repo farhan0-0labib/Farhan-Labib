@@ -1,0 +1,202 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="theme-color" content="#090d1b"><title>Attendance · Farhan Labib</title>
+<style>
+:root{--bg:#090d1b;--card:#11182bd9;--line:#26314b;--text:#f4f6ff;--muted:#a7b0c9;--acc:#8b5cf6;--ok:#22c55e;--bad:#ef4444;--warn:#f59e0b}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--text);font:16px/1.55 Inter,system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(ellipse at 15% 0,#20204a,transparent 45%),radial-gradient(ellipse at 90% 20%,#102e46,transparent 38%),var(--bg)}
+[hidden]{display:none!important}
+button,input,select{font:inherit;color:inherit}input,select{width:100%;padding:10px;border-radius:10px;border:1px solid var(--line);background:#080d1a}
+.wrap{max-width:560px;margin:auto;padding:20px 16px 60px}.card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px;margin-bottom:16px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}.top h1{font-size:1.15rem;margin:0}.muted{color:var(--muted)}.sm{font-size:.85rem}
+.btn{border:0;border-radius:12px;padding:12px 18px;font-weight:750;cursor:pointer;background:linear-gradient(100deg,#7c3aed,#0284c7);color:#fff}.btn.alt{background:#202a42;border:1px solid var(--line)}.btn.red{background:#7f1d1d}.btn:disabled{opacity:.55;cursor:not-allowed}.big{width:100%;padding:16px;font-size:1.1rem}
+#lock{position:fixed;inset:0;z-index:50;display:grid;place-items:center;padding:20px;background:var(--bg)}#lock .card{width:100%;max-width:340px;text-align:center}#lock input{margin:14px 0;text-align:center}
+.ring{position:relative;width:210px;margin:6px auto 10px}.ring svg{width:100%;transform:rotate(-90deg)}.ring circle{fill:none;stroke-width:10;stroke-linecap:round}.ring .bg{stroke:#26314b}.ring .fg{stroke:var(--ok);transition:stroke-dashoffset .8s,stroke .4s}
+.ring div{position:absolute;inset:0;display:grid;place-content:center;text-align:center}#pct{font-size:2.8rem;font-weight:850;letter-spacing:-.04em;line-height:1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0;text-align:center}.stats div{background:#080d1a;border:1px solid var(--line);border-radius:14px;padding:10px}.stats b{display:block;font-size:1.3rem}
+#msg{text-align:center;margin:10px 0 0}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.cal-head h2{margin:0;font-size:1.05rem}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;text-align:center}.grid .dow{font-size:.72rem;color:var(--muted)}
+.day{aspect-ratio:1;border-radius:10px;border:1px solid transparent;background:#0d1324;display:grid;place-items:center;font-size:.9rem;cursor:pointer;position:relative}
+.day.off{background:transparent;color:#5b6684}.day.hol{background:#f59e0b24;color:var(--warn);border-color:#f59e0b55}.day.p{background:#22c55e30;border-color:var(--ok)}.day.a{background:#ef444430;border-color:var(--bad)}.day.miss{border:1px dashed var(--bad)}.day.pre,.day.fut{opacity:.4}.day.today{box-shadow:0 0 0 2px var(--acc)}.day.empty{visibility:hidden}
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;font-size:.78rem;color:var(--muted)}.legend i{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:5px;vertical-align:-1px}
+details summary{cursor:pointer;font-weight:750;list-style:none}details summary::before{content:"⚙ "}details[open] summary{margin-bottom:14px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px}h3{margin:20px 0 8px;font-size:.95rem}
+.hl{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}.hl button{background:none;border:0;color:var(--bad);cursor:pointer;font-size:1rem}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(80px);background:#202a42;border:1px solid var(--acc);padding:10px 18px;border-radius:12px;transition:.3s;z-index:9;max-width:90%}#toast.on{transform:translateX(-50%)}
+</style></head><body>
+
+<div id="lock"><div class="card"><div style="font-size:2.4rem">🔒</div><h1 style="margin:6px 0">Attendance</h1><div class="muted sm">Enter password to continue</div><input id="pw" type="password" placeholder="Password" autocomplete="off"><button class="btn big" id="go">Unlock</button><div id="err" class="sm" style="color:var(--bad);margin-top:10px;min-height:1.2em"></div></div></div>
+
+<div class="wrap" id="app" hidden>
+ <div class="top"><h1>📚 My Attendance</h1><button class="btn alt sm" id="lockbtn">Lock</button></div>
+
+ <div class="card">
+  <div class="ring"><svg viewBox="0 0 120 120"><circle class="bg" cx="60" cy="60" r="52"/><circle class="fg" id="fg" cx="60" cy="60" r="52" stroke-dasharray="326.7" stroke-dashoffset="326.7"/></svg><div><span id="pct">—</span><span class="muted sm">attendance</span></div></div>
+  <div class="stats"><div><b id="sAtt">0</b><span class="muted sm">Present</span></div><div><b id="sAbs">0</b><span class="muted sm">Absent</span></div><div><b id="sTot">0</b><span class="muted sm">Total days</span></div></div>
+  <button class="btn big" id="check">✓ Check</button>
+  <div id="msg" class="muted sm"></div>
+ </div>
+
+ <div class="card">
+  <div class="cal-head"><button class="btn alt sm" id="prev">‹</button><h2 id="mlabel">History</h2><button class="btn alt sm" id="next">›</button></div>
+  <div class="grid" id="cal"></div>
+  <div class="legend"><span><i style="background:#22c55e"></i>Present</span><span><i style="background:#ef4444"></i>Absent</span><span><i style="border:1px dashed #ef4444"></i>Not marked</span><span><i style="background:#f59e0b"></i>Holiday</span><span><i style="background:#5b6684"></i>Fri/Sat</span></div>
+  <div class="muted sm" style="margin-top:8px">Tap a day to edit it in Advanced.</div>
+ </div>
+
+ <details class="card" id="adv"><summary>Advanced</summary>
+  <h3 style="margin-top:0">Edit a day</h3>
+  <div class="row"><div><label>Date</label><input type="date" id="eDate"></div><div><label>Status</label><select id="eStat"><option value="p">Present</option><option value="a">Absent</option><option value="">Clear (not marked)</option></select></div></div>
+  <button class="btn" id="eSave">Save day</button>
+
+  <h3>Holidays <span class="muted sm">(Fridays &amp; Saturdays are automatic)</span></h3>
+  <div class="row"><div><label>Date</label><input type="date" id="hDate"></div><div><label>Name</label><input id="hName" placeholder="e.g. Victory Day"></div></div>
+  <button class="btn alt" id="hAdd">Add holiday</button><div id="hList"></div>
+
+  <h3>Settings</h3>
+  <div class="row"><div><label>Tracking starts on</label><input type="date" id="cStart"></div><div><label>Target %</label><input type="number" id="cTarget" min="1" max="100"></div></div>
+  <div class="row"><div><label>Earlier days attended</label><input type="number" id="cAtt" min="0"></div><div><label>Earlier total days</label><input type="number" id="cTot" min="0"></div></div>
+  <div class="muted sm" style="margin-bottom:10px">Example: already attended 9 of 11 days before using this page → enter 9 and 11.</div>
+  <button class="btn" id="cSave">Save settings</button>
+
+  <h3>Backup</h3>
+  <div class="muted sm" style="margin-bottom:8px">Data is saved to the cloud (shared by all your devices). Export now and then for a local backup.</div>
+  <button class="btn alt" id="exp">Export</button> <button class="btn alt" id="impBtn">Import</button> <button class="btn red" id="reset">Reset all</button>
+  <input type="file" id="imp" accept="application/json" hidden>
+ </details>
+</div>
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.0"></script>
+<script>
+const PASS='Qwerty',AUTH='attendance.auth';
+/* ▼▼ Your Supabase values (publishable/anon key only, NEVER the secret or service_role key) ▼▼ */
+const SUPABASE_URL='https://fhfqytpubeixinrygmyi.supabase.co';
+const SUPABASE_KEY='sb_publishable_01Bp2oqptmLLM8lXr_nQeQ_yzEmv2RQ';
+/* ▲▲ */
+const sb=window.supabase?window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY):null;
+const $=s=>document.querySelector(s),pad=n=>String(n).padStart(2,'0');
+const key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const parse=k=>{const[a,b,c]=k.split('-').map(Number);return new Date(a,b-1,c)};
+const DEF={start:'2026-09-24',target:75,baseAtt:0,baseTot:0,marks:{},holidays:{}};
+let S=null,cur=new Date(),busy=false,lastErr='';cur.setDate(1);
+
+async function load(){           // true only if the cloud copy was really read
+ try{
+  if(!sb)throw new Error('Supabase library did not load (blocked or offline)');
+  const{data,error}=await sb.from('attendance_state').select('data').eq('id',1).maybeSingle();
+  if(error)throw error;
+  S={...DEF,...(data&&data.data||{})};return true;
+ }catch(e){lastErr=(e&&(e.message||e.details||e.code))||String(e);console.error('load failed:',lastErr,e);return false}
+}
+async function save(){
+ try{const{error}=await sb.from('attendance_state').upsert({id:1,data:S});if(error)throw error;return true}
+ catch(e){console.error('save failed',e);toast('Could not save to the cloud — check internet');return false}
+}
+/* Every change: read latest from cloud -> apply change -> write. Prevents one device overwriting another with stale data. */
+async function act(fn,okMsg){
+ if(busy)return false;busy=true;
+ try{
+  if(!await load()){toast('No connection — nothing was changed');return false}
+  if(fn()===false)return false;
+  if(!await save()){await load();render();return false}
+  render();if(okMsg)toast(okMsg);return true;
+ }finally{busy=false}
+}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
+const today=()=>{const d=new Date();d.setHours(0,0,0,0);return d};
+const isHol=d=>S.holidays[key(d)]!==undefined,isOff=d=>d.getDay()===5||d.getDay()===6||isHol(d);
+
+function stats(){
+ const t=today(),tk=key(t);let att=+S.baseAtt||0,tot=+S.baseTot||0;
+ for(let d=parse(S.start);d<=t;d.setDate(d.getDate()+1)){
+  if(isOff(d))continue;const k=key(d),m=S.marks[k];
+  if(k===tk&&!m)continue;
+  tot++;if(m==='p')att++;
+ }
+ return{att,tot,abs:tot-att,pct:tot?att/tot*100:0};
+}
+function message(s){
+ if(!s.tot)return'No days counted yet.';
+ const T=(+S.target||75)/100;
+ if(s.pct/100>=T){const k=Math.floor(s.att/T-s.tot+1e-9);return k>0?`You can miss ${k} more day${k>1?'s':''} and stay at ${S.target}%.`:`Right at your ${S.target}% target — don't miss a day!`}
+ if(T>=1)return'Target is 100% — one absence is permanent.';
+ const n=Math.ceil((T*s.tot-s.att)/(1-T)-1e-9);return`Attend the next ${n} day${n>1?'s':''} in a row to reach ${S.target}%.`;
+}
+function render(){
+ const s=stats(),t=today(),tk=key(t),T=+S.target||75;
+ $('#pct').textContent=s.tot?s.pct.toFixed(1)+'%':'—';
+ $('#sAtt').textContent=s.att;$('#sAbs').textContent=s.abs;$('#sTot').textContent=s.tot;
+ const fg=$('#fg');fg.style.strokeDashoffset=326.7*(1-s.pct/100);
+ fg.style.stroke=s.pct>=T?'var(--ok)':s.pct>=T-10?'var(--warn)':'var(--bad)';
+ $('#msg').textContent=message(s);
+ const b=$('#check'),m=S.marks[tk];b.disabled=true;
+ if(t<parse(S.start))b.textContent='Tracking starts '+S.start;
+ else if(isOff(t))b.textContent='🌴 No class today';
+ else if(m==='p')b.textContent='✓ Marked present today';
+ else if(m==='a')b.textContent='Marked absent (change in Advanced)';
+ else{b.disabled=false;b.textContent='✓ Check — I attended today'}
+ drawCal();drawHol();
+}
+function drawCal(){
+ const y=cur.getFullYear(),mo=cur.getMonth(),t=today(),st=parse(S.start);
+ $('#mlabel').textContent=cur.toLocaleDateString('en-GB',{month:'long',year:'numeric'});
+ let h=['Sat','Sun','Mon','Tue','Wed','Thu','Fri'].map(x=>`<div class="dow">${x}</div>`).join('');
+ h+='<div class="day empty"></div>'.repeat((new Date(y,mo,1).getDay()+1)%7);
+ for(let i=1,n=new Date(y,mo+1,0).getDate();i<=n;i++){
+  const d=new Date(y,mo,i),k=key(d),m=S.marks[k];let c='day';
+  if(d<st)c+=' pre';else if(isHol(d))c+=' hol';else if(isOff(d))c+=' off';
+  else if(m==='p')c+=' p';else if(m==='a')c+=' a';else if(d<t)c+=' miss';else if(d>t)c+=' fut';
+  if(+d===+t)c+=' today';
+  h+=`<div class="${c}" data-k="${k}">${i}</div>`;
+ }
+ $('#cal').innerHTML=h;
+}
+function drawHol(){
+ const box=$('#hList');box.textContent='';
+ Object.keys(S.holidays).sort().forEach(k=>{
+  const r=document.createElement('div');r.className='hl';
+  const s=document.createElement('span');s.textContent=`${k} — ${S.holidays[k]||'Holiday'}`;
+  const x=document.createElement('button');x.textContent='✕';x.onclick=()=>act(()=>{delete S.holidays[k]},'Holiday removed');
+  r.append(s,x);box.append(r);
+ });
+}
+function fillInputs(){$('#cStart').value=S.start;$('#cTarget').value=S.target;$('#cAtt').value=S.baseAtt;$('#cTot').value=S.baseTot;$('#eDate').value=key(today())}
+function start(){$('#lock').hidden=true;$('#app').hidden=false;fillInputs();render()}
+
+async function tryPw(){
+ if($('#pw').value!==PASS){$('#err').textContent='Wrong password';$('#pw').select();return}
+ $('#err').textContent='Loading from cloud…';
+ if(await load()){try{localStorage.setItem(AUTH,'1')}catch(e){}$('#err').textContent='';start()}
+ else $('#err').textContent='Could not load: '+lastErr;
+}
+$('#go').onclick=tryPw;$('#pw').onkeydown=e=>{if(e.key==='Enter')tryPw()};
+$('#lockbtn').onclick=()=>{try{localStorage.removeItem(AUTH)}catch(e){}location.reload()};
+
+$('#check').onclick=()=>{const k=key(today());act(()=>{if(S.marks[k]){toast('Already marked today');return false}S.marks[k]='p'},'Attendance marked ✓')};
+$('#prev').onclick=()=>{cur.setMonth(cur.getMonth()-1);drawCal()};$('#next').onclick=()=>{cur.setMonth(cur.getMonth()+1);drawCal()};
+$('#cal').onclick=e=>{const d=e.target.closest('[data-k]');if(!d)return;$('#eDate').value=d.dataset.k;$('#eStat').value=S.marks[d.dataset.k]||'p';$('#adv').open=true;$('#adv').scrollIntoView({behavior:'smooth'})};
+$('#eSave').onclick=()=>{const v=$('#eDate').value,s=$('#eStat').value;if(!v)return toast('Pick a date');const d=parse(v);
+ act(()=>{
+  if(d<parse(S.start)){toast('That date is before the start date');return false}
+  if(isOff(d)){toast('That day is a holiday / Fri / Sat');return false}
+  if(d>today()){toast('Cannot mark a future day');return false}
+  if(s)S.marks[v]=s;else delete S.marks[v];
+ },'Saved')};
+$('#hAdd').onclick=()=>{const v=$('#hDate').value,n=$('#hName').value.trim()||'Holiday';if(!v)return toast('Pick a date');
+ act(()=>{S.holidays[v]=n},'Holiday added').then(ok=>{if(ok)$('#hName').value=''})};
+$('#cSave').onclick=()=>{const st=$('#cStart').value;if(!st)return toast('Pick a start date');
+ const tg=Math.min(100,Math.max(1,+$('#cTarget').value||75)),a=Math.max(0,+$('#cAtt').value||0),t=Math.max(a,+$('#cTot').value||0);
+ act(()=>{S.start=st;S.target=tg;S.baseAtt=a;S.baseTot=t},'Settings saved').then(ok=>{if(ok)fillInputs()})};
+$('#exp').onclick=()=>{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S,null,2)],{type:'application/json'}));a.download='attendance-backup.json';a.click()};
+$('#impBtn').onclick=()=>$('#imp').click();
+$('#imp').onchange=e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const r=new FileReader();
+ r.onload=()=>{let o;try{o=JSON.parse(r.result);if(typeof o.marks!=='object'||typeof o.holidays!=='object')throw 0}catch(x){return toast('Not a valid backup file')}
+  act(()=>{S={...DEF,...o}},'Imported ✓').then(ok=>{if(ok)fillInputs()})};r.readAsText(f)};
+$('#reset').onclick=()=>{if(confirm('Delete ALL attendance data (also in the cloud)?'))act(()=>{S={...DEF}},'Reset done').then(ok=>{if(ok)fillInputs()})};
+
+/* Refresh from the cloud whenever you come back to this tab */
+document.addEventListener('visibilitychange',async()=>{
+ if(document.visibilityState==='visible'&&!$('#app').hidden&&!busy&&await load())render();
+});
+/* Auto-login if unlocked before */
+try{if(localStorage.getItem(AUTH)==='1')load().then(ok=>{if(ok)start();else $('#err').textContent='Could not load: '+lastErr})}catch(e){}
+</script></body></html>

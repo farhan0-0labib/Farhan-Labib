@@ -1,105 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>My Routine | Farhan Labib</title>
-    <!-- আপনার মেইন সাইটের ডিজাইন লোড করা হচ্ছে -->
-    <link rel="stylesheet" href="styles.css"> 
-    <style>
-        /* রুটিন কার্ডের জন্য বাড়তি ডিজাইন */
-        .routine-container { max-width: 800px; margin: 100px auto 40px; padding: 20px; }
-        .routine-card { background: #1e1e2f; color: white; padding: 20px; margin-bottom: 20px; border-left: 5px solid #007bff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
-        .routine-card h3 { margin: 0 0 10px 0; color: #007bff; font-size: 1.5rem; }
-        .routine-card p { margin: 8px 0; color: #ccc; }
-        .time-badge { background: #28a745; color: white; padding: 4px 10px; border-radius: 12px; font-size: 14px; font-weight: bold; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Routine | Farhan Labib</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.rt h2{margin:0}.rt .muted{color:var(--muted)}
+.rt-hd{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.rt-sum{color:var(--muted);font-size:.92rem}
+.rt-today{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:34px}
+.rt-t{position:relative;padding:16px;border-radius:18px;border:1px solid var(--line);background:#11182bd9;transition:.25s}
+.rt-t b{display:block;font-size:1.5rem;letter-spacing:-.03em}.rt-t span{display:block;font-weight:650}.rt-t em{font-style:normal;font-size:.75rem;color:var(--muted)}
+.rt-t.next{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent),0 12px 34px color-mix(in srgb,var(--accent) 30%,transparent)}.rt-t.next em{color:var(--accent);font-weight:800}
+.rt-t.past{opacity:.5}
+.rt-empty{padding:22px;border:1px dashed var(--line);border-radius:18px;color:var(--muted);text-align:center;margin-bottom:34px}
+.rt-week{border:1px solid var(--line);border-radius:22px;overflow:hidden;background:#11182bd9}
+.rt-row{display:grid;grid-template-columns:104px 1fr;border-bottom:1px solid var(--line)}.rt-row:last-child{border:0}
+.rt-day{padding:16px;font-weight:800;font-size:1.05rem;background:#ffffff08;border-right:1px solid var(--line)}.rt-day small{display:block;font-weight:500;color:var(--muted);font-size:.72rem}
+.rt-slots{display:flex;flex-wrap:wrap;gap:10px;padding:12px;align-items:center}
+.rt-slot{padding:9px 13px;border-radius:12px;background:color-mix(in srgb,var(--accent) 14%,transparent);border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);min-width:120px}
+.rt-slot b{display:block;color:var(--accent);font-size:.92rem}.rt-slot span{font-weight:650}.rt-slot small{display:block;color:var(--muted);font-size:.74rem;margin-top:2px}
+.rt-free{color:var(--muted);font-size:.9rem;padding:4px 6px}
+.rt-row.today{background:color-mix(in srgb,var(--accent) 10%,transparent)}.rt-row.today .rt-day{color:var(--accent)}
+[data-theme=light] .rt-t,[data-theme=light] .rt-week{background:#fff}
+@media(max-width:560px){.rt-row{grid-template-columns:72px 1fr}.rt-day{padding:12px;font-size:.95rem}.rt-slot{min-width:100px;flex:1 1 40%}}
+</style>
 </head>
 <body data-page="routine">
-    <div id="app"></div> <!-- মেনু ও ফুটার এখানে লোড হবে -->
+<div id="app"></div>
 
-    <div class="routine-container">
-        <h1 style="text-align: center; margin-bottom: 30px;">My Weekly Routine</h1>
-        <div id="routine-list">Loading...</div>
-    </div>
+<div id="rt" class="rt">
+  <section class="page-head"><div class="eyebrow">Plan your week</div><h1>My routine</h1></section>
+  <section id="rt-today"></section>
+  <section><div class="rt-hd"><h2>Weekly timetable</h2></div><div id="rt-week" class="rt-week"><p class="muted" style="padding:20px">Loading routine…</p></div></section>
+</div>
 
-    <!-- আপনার মেইন app.js লোড করা হচ্ছে (মেনুর জন্য) -->
-    <script src="app.js"></script>
+<script src="app.js"></script>
+<script>
+(() => {
+  const USER = 'farhan0-0labib', REPO = 'Farhan-Labib', CK = 'routine.cache.v2';
+  const DAYS = ['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const pad = n => String(n).padStart(2, '0');
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const cap = s => s ? s.charAt(0).toUpperCase() + s.slice(1).toLowerCase() : 'Other';
+  const hhmm = raw => {
+    const s = String(raw || '').replace(/["']/g, '').trim();
+    if (/^\d{5,}$/.test(s)) { const t = +s; return pad(Math.floor(t / 3600)) + ':' + pad(Math.floor(t % 3600 / 60)); }
+    const m = s.match(/(\d{1,2}):(\d{2})/);
+    return m ? pad(+m[1]) + ':' + m[2] : (s || '—');
+  };
+  const mins = t => { const m = /^(\d{2}):(\d{2})$/.exec(t); return m ? +m[1] * 60 + +m[2] : 9999; };
 
-    <script>
-        const user = "farhan0-0labib";
-        const repo = "Farhan-Labib";
+  function parseFile(text) {
+    const p = text.replace(/\r/g, '').split('---'), fm = p[1] || '';
+    const g = k => { const m = fm.match(new RegExp('^' + k + ':[ \\t]*(.*)$', 'm')); return m ? m[1].trim().replace(/^["']|["']$/g, '').trim() : ''; };
+    return { day: cap(g('day')), subject: g('subject') || 'No subject', time: hhmm(g('event_time')), body: p.slice(2).join('---').replace(/[#*_`>]/g, '').replace(/\s+/g, ' ').trim() };
+  }
+  async function fetchRoutine() {
+    const r = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/_routine`);
+    if (!r.ok) throw new Error('GitHub ' + r.status);
+    const files = (await r.json()).filter(f => f.name.endsWith('.md'));
+    return Promise.all(files.map(f => fetch(f.download_url).then(x => x.text()).then(parseFile)));
+  }
+  async function getItems() {
+    let cache = null;
+    try { cache = JSON.parse(localStorage.getItem(CK) || 'null'); } catch (e) {}
+    if (cache && Date.now() - cache.t < 180000) return cache.items;      // fresh for 3 min (saves GitHub requests)
+    try {
+      const items = await fetchRoutine();
+      try { localStorage.setItem(CK, JSON.stringify({ t: Date.now(), items })); } catch (e) {}
+      return items;
+    } catch (e) { if (cache) return cache.items; throw e; }              // offline / rate-limited: use the last saved copy
+  }
 
-        // পেজ লোড হওয়ার পর রুটিন লোড করার ফাংশনটি কল করা হবে
-        window.addEventListener('load', () => {
-            setTimeout(loadRoutine, 1000);
-        });
-
-        async function loadRoutine() {
-            const listDiv = document.getElementById('routine-list');
-            
-            try {
-                const response = await fetch(`https://api.github.com/repos/${user}/${repo}/contents/_routine`);
-                
-                if (!response.ok) {
-                    throw new Error('GitHub API error');
-                }
-
-                const files = await response.json();
-
-                if (!files || files.length === 0) {
-                    listDiv.innerHTML = "<p style='text-align:center;'>No routine found.</p>";
-                    return;
-                }
-
-                listDiv.innerHTML = ""; 
-
-                for (let file of files) {
-                    if(file.name.endsWith('.md')){
-                        const fileRes = await fetch(file.download_url);
-                        const text = await fileRes.text();
-                        
-                        const parts = text.split('---');
-                        const frontmatter = parts[1] || "";
-                        const body = parts[2] ? parts[2].trim() : "No details";
-
-                        const dayMatch = frontmatter.match(/day:\s*(.*)/);
-                        const subjectMatch = frontmatter.match(/subject:\s*(.*)/);
-                        const eventTimeMatch = frontmatter.match(/event_time:\s*(.*)/);
-
-                        const day = dayMatch ? dayMatch[1].trim() : "Unknown";
-                        const subject = subjectMatch ? subjectMatch[1].trim() : "No Subject";
-                        let eventTime = eventTimeMatch ? eventTimeMatch[1].replace(/["']/g, '').trim() : "N/A";
-
-                        // সেকেন্ডকে ঘণ্টা-মিনিটে রূপান্তর
-                        if (!isNaN(eventTime) && eventTime.length > 4) {
-                            let totalSeconds = parseInt(eventTime);
-                            let h = Math.floor(totalSeconds / 3600).toString().padStart(2, '0');
-                            let m = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
-                            eventTime = `${h}:${m}`;
-                        } else if(eventTime.includes(':')) {
-                            const timeParts = eventTime.split('T');
-                            if(timeParts.length > 1) {
-                                eventTime = timeParts[1].slice(0, 5);
-                            }
-                        }
-
-                        const card = document.createElement('div');
-                        card.className = 'routine-card';
-                        card.innerHTML = `
-                            <h3>${day}</h3>
-                            <p><strong>Subject:</strong> ${subject}</p>
-                            <p><span class="time-badge">Time: ${eventTime}</span></p>
-                            <p><em>${body}</em></p>
-                        `;
-                        listDiv.appendChild(card);
-                    }
-                }
-            } catch (error) {
-                console.error(error);
-                listDiv.innerHTML = "<p style='color:orange; text-align:center;'>রুটিন লোড করা যাচ্ছে না। দয়া করে রিফ্রেশ দিন।</p>";
-            }
-        }
-    </script>
+  let ITEMS = [];
+  function renderToday() {
+    const now = new Date(), dn = NAMES[now.getDay()], nm = now.getHours() * 60 + now.getMinutes();
+    const list = ITEMS.filter(i => i.day === dn).sort((a, b) => mins(a.time) - mins(b.time));
+    const next = list.findIndex(i => mins(i.time) >= nm);
+    const head = `<div class="rt-hd"><div><div class="eyebrow">Today</div><h2>${dn}, ${now.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })}</h2></div>
+      <div class="rt-sum">${list.length ? `${list.length} item${list.length > 1 ? 's' : ''} · first at ${esc(list[0].time)}` : ''}</div></div>`;
+    const body = list.length
+      ? `<div class="rt-today">${list.map((i, k) => {
+          const cls = k === next ? 'next' : mins(i.time) < nm ? 'past' : '';
+          const label = k === next ? 'Up next' : cls === 'past' ? 'Earlier' : 'Later';
+          return `<div class="rt-t ${cls}"><b>${esc(i.time)}</b><span>${esc(i.subject)}</span><em>${label}</em></div>`;
+        }).join('')}</div>`
+      : `<div class="rt-empty">🎉 Nothing scheduled today — enjoy the free time!</div>`;
+    document.getElementById('rt-today').innerHTML = head + body;
+  }
+  function renderWeek() {
+    const today = NAMES[new Date().getDay()], by = {};
+    ITEMS.forEach(i => (by[i.day] = by[i.day] || []).push(i));
+    const order = DAYS.concat(Object.keys(by).filter(d => !DAYS.includes(d)));
+    document.getElementById('rt-week').innerHTML = order.map(d => {
+      const l = (by[d] || []).sort((a, b) => mins(a.time) - mins(b.time));
+      return `<div class="rt-row ${d === today ? 'today' : ''}"><div class="rt-day">${esc(d.slice(0, 3))}<small>${esc(d)}</small></div><div class="rt-slots">${
+        l.map(i => `<div class="rt-slot"><b>${esc(i.time)}</b><span>${esc(i.subject)}</span>${i.body ? `<small>${esc(i.body)}</small>` : ''}</div>`).join('') || '<span class="rt-free">Free</span>'
+      }</div></div>`;
+    }).join('');
+  }
+  async function init() {
+    try { ITEMS = await getItems(); renderToday(); renderWeek(); setInterval(renderToday, 60000); }
+    catch (e) {
+      console.error(e);
+      document.getElementById('rt-week').innerHTML = '<p style="padding:20px;color:orange">Could not load the routine. Please refresh.</p>';
+    }
+  }
+  // app.js builds the menu + footer asynchronously: wait for its <main>, then put the routine INSIDE it (so the footer stays below)
+  let tries = 0;
+  const wait = setInterval(() => {
+    const m = document.querySelector('#app main'); tries++;
+    if (m || tries > 100) { clearInterval(wait); if (m) m.appendChild(document.getElementById('rt')); init(); }
+  }, 50);
+})();
+</script>
 </body>
 </html>

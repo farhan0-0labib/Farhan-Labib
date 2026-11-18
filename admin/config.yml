@@ -8,9 +8,15 @@ backend:
 media_folder: "images/uploads"
 public_folder: "/images/uploads"
 
+site_url: https://farhanlabib.dpdns.org
+display_url: https://farhanlabib.dpdns.org
+logo_url: https://farhanlabib.dpdns.org/icon-192.png
+locale: "en"
+show_preview_links: true
+
 collections:
   - name: "site_content"
-    label: "Website Content"
+    label: "🌐 Website Content"
     files:
       - name: "site"
         label: "Site Settings & Pages"
@@ -52,8 +58,14 @@ collections:
               - { label: "Post Body", name: "body", widget: "markdown" }
 
   - name: "routine"
-    label: "Weekly Routine"
+    label: "📅 Weekly Routine"
+    label_singular: "routine"
+    description: "Class / study routine. A Telegram reminder is sent at the Notification Time."
     folder: "_routine"
+    summary: "{{day}} · {{event_time}} — {{subject}}"
+    sortable_fields: ["day", "subject", "event_time"]
+    view_groups:
+      - { label: "By day", field: "day" }
     create: true
     slug: "{{fields.day}}" # দিনের নামেই ফাইল সেভ হবে
     fields:
@@ -63,3 +75,33 @@ collections:
       - {label: "Event Time", name: "event_time", widget: "datetime", format: "HH:mm", time_format: "HH:mm", date_format: false, default: ""}
       - {label: "Notification Time", name: "notify_time", widget: "datetime", format: "HH:mm", time_format: "HH:mm", date_format: false, default: ""}
       - {label: "Details (Optional)", name: "body", widget: "markdown", required: false}
+
+  - name: "reminders"
+    label: "🔔 Reminders"
+    description: "Your own Telegram reminders (separate from the routine). Pick a date, or repeat every week on chosen days."
+    files:
+      - name: "reminders"
+        label: "My Reminders"
+        file: "reminders.json"
+        fields:
+          - label: "Reminders"
+            name: "items"
+            widget: "list"
+            label_singular: "reminder"
+            required: false
+            summary: "{{fields.icon}} {{fields.title}} · {{fields.time}}"
+            fields:
+              - { label: "Title", name: "title", widget: "string" }
+              - { label: "Icon (emoji, optional)", name: "icon", widget: "string", required: false, default: "⏰" }
+              - { label: "Message sent to Telegram (optional)", name: "message", widget: "text", required: false, hint: "Write anything you want to see in the Telegram message." }
+              - label: "How often?"
+                name: "repeat"
+                widget: "select"
+                default: "date"
+                options:
+                  - { label: "One time — on a date", value: "date" }
+                  - { label: "Every week — on chosen days", value: "weekly" }
+              - { label: "Date (only for one-time)", name: "date", widget: "datetime", date_format: "YYYY-MM-DD", time_format: false, format: "YYYY-MM-DD", required: false }
+              - { label: "Days (only for weekly)", name: "days", widget: "select", multiple: true, required: false, options: ["Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday"] }
+              - { label: "Time", name: "time", widget: "datetime", date_format: false, time_format: "HH:mm", format: "HH:mm" }
+              - { label: "Active (turn off to pause)", name: "active", widget: "boolean", default: true }

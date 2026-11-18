@@ -5,8 +5,28 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex">
   <title>Admin · Farhan Labib</title>
+  <style>
+    /* Dark "pro" skin for Decap CMS. Remove this whole <style> block to go back to the default look. */
+    html:not(.cms-light){background:#fff;filter:invert(1) hue-rotate(200deg)}
+    html:not(.cms-light) img,html:not(.cms-light) video,html:not(.cms-light) canvas,html:not(.cms-light) iframe{filter:invert(1) hue-rotate(160deg)}
+    body{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif!important;-webkit-font-smoothing:antialiased}
+    #nc-root button,#nc-root textarea,#nc-root select,#nc-root input:not([type=checkbox]):not([type=radio]){border-radius:10px!important;font-family:inherit!important}
+    #nc-root [role=dialog],#nc-root [class*="Modal"],#nc-root [class*="Card"]{border-radius:16px!important}
+    #nc-root{letter-spacing:.005em}
+    #nc-root a{transition:.2s}#nc-root button{transition:.2s}
+    #nc-root button:hover{filter:brightness(1.08)}
+    #nc-root ::-webkit-scrollbar{width:10px;height:10px}#nc-root ::-webkit-scrollbar-thumb{background:#9aa3b8;border-radius:9px}
+    #cms-theme{position:fixed;left:14px;bottom:14px;z-index:99999;width:42px;height:42px;border-radius:50%;border:0;cursor:pointer;font-size:18px;background:#8b5cf6;color:#fff;box-shadow:0 6px 20px #0006}
+    html:not(.cms-light) #cms-theme{filter:invert(1) hue-rotate(160deg)}
+  </style>
 </head>
 <body>
+  <button id="cms-theme" title="Light / dark">◐</button>
+  <script>
+    (function(){var h=document.documentElement,b=document.getElementById('cms-theme');
+      try{if(localStorage.getItem('cms-theme')==='light')h.classList.add('cms-light')}catch(e){}
+      b.onclick=function(){h.classList.toggle('cms-light');try{localStorage.setItem('cms-theme',h.classList.contains('cms-light')?'light':'dark')}catch(e){}};})();
+  </script>
   <script src="https://unpkg.com/decap-cms@^3.0.0/dist/decap-cms.js"></script>
 </body>
 </html>

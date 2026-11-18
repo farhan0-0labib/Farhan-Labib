@@ -1,6 +1,15 @@
 {
   "items": [
     {
+      "icon": "🎮",
+      "repeat": "date",
+      "active": true,
+      "title": "Gta6 Launching in New Zealand (5:00 pm)",
+      "message": "Gta 6 Launching in 5:00\n(New Zea Land)",
+      "date": "2026-11-18",
+      "time": "16:55"
+    },
+    {
       "icon": "💳",
       "repeat": "date",
       "active": true,

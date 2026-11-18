@@ -1,1 +1,13 @@
-{ "items": [] }
+{
+  "items": [
+    {
+      "icon": "⏰",
+      "repeat": "date",
+      "active": true,
+      "title": "Test Message 📋",
+      "date": "2026-11-18",
+      "time": "16:13",
+      "message": "Launching the reminder section of my site. \n\n\nIT IS A TEST MESSAGE. "
+    }
+  ]
+}

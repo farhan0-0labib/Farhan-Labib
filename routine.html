@@ -60,9 +60,12 @@
   }
   async function fetchRoutine() {
     const r = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/_routine`);
-    if (!r.ok) throw new Error('GitHub ' + r.status);
+    if (!r.ok) throw new Error('GitHub API error ' + r.status + (r.status === 403 ? ' (rate limit: too many loads from this network, try again in a few minutes)' : ''));
     const files = (await r.json()).filter(f => f.name.endsWith('.md'));
-    return Promise.all(files.map(f => fetch(f.download_url).then(x => x.text()).then(parseFile)));
+    const res = await Promise.allSettled(files.map(f => fetch(f.download_url).then(x => { if (!x.ok) throw new Error(f.name + ' ' + x.status); return x.text(); }).then(parseFile)));
+    const ok = res.filter(x => x.status === 'fulfilled').map(x => x.value);
+    if (!ok.length && files.length) throw new Error('Could not download the routine files: ' + (res[0].reason && res[0].reason.message));
+    return ok;                                  // one broken file no longer breaks the whole page
   }
   async function getItems() {
     let cache = null;
@@ -106,7 +109,7 @@
     try { ITEMS = await getItems(); renderToday(); renderWeek(); setInterval(renderToday, 60000); }
     catch (e) {
       console.error(e);
-      document.getElementById('rt-week').innerHTML = '<p style="padding:20px;color:orange">Could not load the routine. Please refresh.</p>';
+      document.getElementById('rt-week').innerHTML = '<div style="padding:20px;color:orange">Could not load the routine.<br><small>' + esc((e && e.message) || e) + '</small><br><button class="button secondary" style="margin-top:12px" onclick="localStorage.removeItem(\'routine.cache.v2\');location.reload()">↻ Try again</button></div>';
     }
   }
   // app.js builds the menu + footer asynchronously: wait for its <main>, then put the routine INSIDE it (so the footer stays below)

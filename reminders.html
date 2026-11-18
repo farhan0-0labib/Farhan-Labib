@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reminders | Farhan Labib</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+.rm .muted{color:var(--muted)}
+.rm-top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap}
+.rm-back{color:var(--muted);text-decoration:none;font-size:.92rem}.rm-back:hover{color:var(--text)}
+.rm h2{font-size:1.05rem;margin:30px 0 12px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.rm-list{display:grid;gap:12px}
+.rm-card{display:flex;align-items:center;gap:16px;padding:16px 18px;border-radius:20px;border:1px solid var(--line);background:#11182bd9;transition:.25s}
+.rm-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 12px 34px color-mix(in srgb,var(--accent) 22%,transparent)}
+.rm-ico{flex:none;width:50px;height:50px;border-radius:16px;display:grid;place-items:center;font-size:1.5rem;background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 35%,transparent),#ec489930)}
+.rm-main{flex:1;min-width:0}.rm-main b{display:block;font-size:1.05rem}.rm-main p{margin:2px 0 0;color:var(--muted);font-size:.9rem;white-space:pre-line}
+.rm-meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:.78rem;color:var(--muted)}
+.rm-meta i{font-style:normal;padding:3px 10px;border-radius:999px;border:1px solid var(--line)}
+.rm-left{flex:none;align-self:flex-start;font-size:.75rem;font-weight:800;padding:5px 11px;border-radius:999px;color:#fff;background:linear-gradient(100deg,#7c3aed,#ec4899);white-space:nowrap}
+.rm-left.soon{background:linear-gradient(100deg,#f59e0b,#ef4444)}.rm-left.past{background:#374262;color:#c3cbe0}
+.rm-card.dim{opacity:.55}
+.rm-empty{padding:34px;border:1px dashed var(--line);border-radius:20px;text-align:center;color:var(--muted)}
+[data-theme=light] .rm-card{background:#fff}
+@media(max-width:520px){.rm-card{flex-wrap:wrap}.rm-left{order:3}}
+</style>
+</head>
+<body data-page="reminders">
+<div id="app"></div>
+
+<div id="rm" class="rm">
+  <section class="page-head rm-top"><div><div class="eyebrow">Never miss a thing</div><h1>Reminders</h1></div><a class="rm-back" href="routine.html">← Back to routine</a></section>
+  <div id="rm-body"><p class="muted">Loading…</p></div>
+</div>
+
+<script src="app.js"></script>
+<script>
+(() => {
+  const DAYS = ['Saturday','Sunday','Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const pad = n => String(n).padStart(2, '0');
+  const hhmm = raw => { const m = String(raw || '').match(/(\d{1,2}):(\d{2})/); return m ? pad(+m[1]) + ':' + m[2] : ''; };
+  const toDate = s => { const [a, b, c] = String(s).slice(0, 10).split('-').map(Number); return new Date(a, b - 1, c); };
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const left = r => Math.round((toDate(r.date) - today) / 864e5);
+
+  function card(r, badge, extra = '') {
+    const meta = [];
+    if (r.repeat === 'weekly') (r.days || []).slice().sort((a, b) => DAYS.indexOf(a) - DAYS.indexOf(b)).forEach(d => meta.push(`<i>${esc(String(d).slice(0, 3))}</i>`));
+    else if (r.date) meta.push(`<i>📅 ${esc(toDate(r.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }))}</i>`);
+    if (hhmm(r.time)) meta.push(`<i>🕐 ${hhmm(r.time)}</i>`);
+    if (r.active === false) meta.push('<i>⏸ Paused</i>');
+    return `<article class="rm-card ${extra} ${r.active === false ? 'dim' : ''}"><div class="rm-ico">${esc(r.icon || '⏰')}</div>
+      <div class="rm-main"><b>${esc(r.title)}</b>${r.message ? `<p>${esc(r.message)}</p>` : ''}<div class="rm-meta">${meta.join('')}</div></div>${badge}</article>`;
+  }
+  function render(items) {
+    items = items.filter(r => r && r.title);
+    const dated = items.filter(r => r.repeat !== 'weekly' && r.date);
+    const weekly = items.filter(r => r.repeat === 'weekly');
+    const upcoming = dated.filter(r => left(r) >= 0).sort((a, b) => toDate(a.date) - toDate(b.date) || hhmm(a.time).localeCompare(hhmm(b.time)));
+    const past = dated.filter(r => left(r) < 0).sort((a, b) => toDate(b.date) - toDate(a.date));
+    let html = '';
+    if (upcoming.length) html += `<h2>Coming up</h2><div class="rm-list">${upcoming.map(r => {
+      const n = left(r), txt = n === 0 ? 'Today' : `${n} day${n > 1 ? 's' : ''} left`;
+      return card(r, `<span class="rm-left ${n <= 2 ? 'soon' : ''}">${txt}</span>`);
+    }).join('')}</div>`;
+    if (weekly.length) html += `<h2>Every week</h2><div class="rm-list">${weekly.map(r => card(r, '')).join('')}</div>`;
+    if (past.length) html += `<h2>Passed</h2><div class="rm-list">${past.map(r => card(r, '<span class="rm-left past">Passed</span>', 'dim')).join('')}</div>`;
+    document.getElementById('rm-body').innerHTML = html || '<div class="rm-empty">🔔 No reminders yet.<br><small>Add some from Admin → Reminders.</small></div>';
+  }
+  async function init() {
+    try {
+      const r = await fetch('reminders.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!r.ok) throw new Error('reminders.json ' + r.status);
+      render((await r.json()).items || []);
+    } catch (e) {
+      console.error(e);
+      document.getElementById('rm-body').innerHTML = `<div class="rm-empty" style="color:orange">Could not load reminders.<br><small>${esc(e.message || e)}</small></div>`;
+    }
+  }
+  // wait for app.js to build the menu + footer, then put the content inside its <main> (footer stays below)
+  let tries = 0;
+  const wait = setInterval(() => {
+    const m = document.querySelector('#app main'); tries++;
+    if (m || tries > 100) { clearInterval(wait); if (m) m.appendChild(document.getElementById('rm')); init(); }
+  }, 50);
+})();
+</script>
+</body>
+</html>

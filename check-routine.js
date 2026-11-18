@@ -120,4 +120,37 @@ await sendTelegramMessage(messageText);
   }
 }
 
-checkRoutine();
+// ===== Custom reminders (reminders.json) — separate from the routine =====
+const h = t => String(t ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+async function checkReminders() {
+  if (FORCE_TEST) return;
+  let list = [];
+  try { list = JSON.parse(fs.readFileSync(path.join(__dirname, 'reminders.json'), 'utf8')).items || []; }
+  catch (e) { console.log('No reminders.json (or unreadable) — skipping reminders.'); return; }
+  fs.mkdirSync(SENT_DIR, { recursive: true });
+  const crypto = require('crypto');
+  for (const r of list) {
+    if (!r || r.active === false || !r.title) continue;
+    const when = parseTimeToMinutes(r.time);
+    if (when === null) continue;
+    const today = r.repeat === 'weekly'
+      ? (r.days || []).some(d => String(d).toLowerCase() === todayDayName.toLowerCase())
+      : String(r.date || '').slice(0, 10) === dateStr;
+    if (!today) continue;
+    const diff = currentMinutes - when;
+    const id = crypto.createHash('md5').update(`${r.title}|${r.time}`).digest('hex').slice(0, 10);
+    const marker = path.join(SENT_DIR, `${dateStr}__reminder__${id}`);
+    console.log(`reminder "${r.title}" at ${r.time}: diff=${diff}`);
+    if (fs.existsSync(marker)) { console.log('Already sent today, skipping.'); continue; }
+    if (diff >= 0 && diff <= WINDOW_MINUTES) {
+      const pad = n => String(n).padStart(2, '0');
+      let text = `${h(r.icon || '⏰')} <b>Reminder</b>\n\n📌 <b>${h(r.title)}</b>\n🕐 ${pad(Math.floor(when / 60))}:${pad(when % 60)}`;
+      if (r.message && String(r.message).trim()) text += `\n\n${h(String(r.message).trim())}`;
+      await sendTelegramMessage(text);
+      fs.writeFileSync(marker, new Date().toISOString());
+      if (process.env.GITHUB_OUTPUT) fs.appendFileSync(process.env.GITHUB_OUTPUT, 'sent=true\n');
+    }
+  }
+}
+
+checkRoutine().then(checkReminders);

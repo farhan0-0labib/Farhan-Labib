@@ -25,13 +25,17 @@
 .rt-row.today{background:color-mix(in srgb,var(--accent) 10%,transparent)}.rt-row.today .rt-day{color:var(--accent)}
 [data-theme=light] .rt-t,[data-theme=light] .rt-week{background:#fff}
 @media(max-width:560px){.rt-row{grid-template-columns:72px 1fr}.rt-day{padding:12px;font-size:.95rem}.rt-slot{min-width:100px;flex:1 1 40%}}
+.rt-top{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap}
+.rt-remind{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:999px;font-weight:800;color:#fff!important;text-decoration:none;background:linear-gradient(100deg,#7c3aed,#ec4899,#f59e0b);background-size:200% 100%;animation:rtShift 6s ease infinite;box-shadow:0 10px 30px #ec489955;transition:transform .2s}
+.rt-remind:hover{transform:translateY(-3px) scale(1.03)}.rt-remind span{transition:transform .2s}.rt-remind:hover span{transform:translateX(4px)}
+@keyframes rtShift{50%{background-position:100% 0}}
 </style>
 </head>
 <body data-page="routine">
 <div id="app"></div>
 
 <div id="rt" class="rt">
-  <section class="page-head"><div class="eyebrow">Plan your week</div><h1>My routine</h1></section>
+  <section class="page-head rt-top"><div><div class="eyebrow">Plan your week</div><h1>My routine</h1></div><a class="rt-remind" href="reminders.html">🔔 Reminders <span>→</span></a></section>
   <section id="rt-today"></section>
   <section><div class="rt-hd"><h2>Weekly timetable</h2></div><div id="rt-week" class="rt-week"><p class="muted" style="padding:20px">Loading routine…</p></div></section>
 </div>
@@ -58,7 +62,17 @@
     const g = k => { const m = fm.match(new RegExp('^' + k + ':[ \\t]*(.*)$', 'm')); return m ? m[1].trim().replace(/^["']|["']$/g, '').trim() : ''; };
     return { day: cap(g('day')), subject: g('subject') || 'No subject', time: hhmm(g('event_time')), body: p.slice(2).join('---').replace(/[#*_`>]/g, '').replace(/\s+/g, ' ').trim() };
   }
+  async function viaStatic() {                 // no API limits: files are served by the site itself
+    const jobs = [];
+    DAYS.forEach(d => { for (let n = 0; n <= 6; n++) jobs.push(fetch(`_routine/${d.toLowerCase()}${n ? '-' + n : ''}.md?t=${Date.now() >> 16}`).then(r => r.ok ? r.text() : null).catch(() => null)); });
+    const out = (await Promise.all(jobs)).filter(Boolean).map(parseFile);
+    if (!out.length) throw new Error('No routine files found');
+    return out;
+  }
   async function fetchRoutine() {
+    try { return await viaApi(); } catch (e) { console.warn('GitHub API failed, using site files:', e.message); return viaStatic(); }
+  }
+  async function viaApi() {
     const r = await fetch(`https://api.github.com/repos/${USER}/${REPO}/contents/_routine`);
     if (!r.ok) throw new Error('GitHub API error ' + r.status + (r.status === 403 ? ' (rate limit: too many loads from this network, try again in a few minutes)' : ''));
     const files = (await r.json()).filter(f => f.name.endsWith('.md'));

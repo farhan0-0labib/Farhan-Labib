@@ -1,13 +1,22 @@
 {
   "items": [
     {
-      "icon": "⏰",
+      "icon": "💳",
       "repeat": "date",
       "active": true,
-      "title": "Test Message 📋",
-      "date": "2026-11-18",
-      "time": "16:13",
-      "message": "Launching the reminder section of my site. \n\n\nIT IS A TEST MESSAGE. "
+      "title": "Atm card",
+      "message": "You have aplied for card on 8 Nov\n10 days passed.\nToday is 11th day",
+      "date": "2026-11-19",
+      "time": "10:00"
+    },
+    {
+      "icon": "💳",
+      "repeat": "date",
+      "active": true,
+      "title": "Atm Card",
+      "message": "Today is 13th day.\nIf any message did'nt come, contact to Dutch Bangla Bank\n\n                                                         -Farhan Labib",
+      "date": "2026-11-22",
+      "time": "12:00"
     }
   ]
 }

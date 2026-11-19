@@ -46,6 +46,18 @@
         "PWA",
         "Cloud Database"
       ]
+    },
+    {
+      "title": "Automated Routine & Reminder Bot",
+      "description": "A serverless automation system that sends custom routine alerts directly to Telegram. Built using Cloudflare Workers for instant webhooks and GitHub Actions for scheduled cron jobs. You can see the routine in the routine page.",
+      "link": "https://farhanlabib.dpdns.org/routine.html",
+      "image": "/images/uploads/2844.jpg",
+      "tags": [
+        "Cloudflare Workers",
+        "GitHub Actions",
+        "Telegram API",
+        "Automation"
+      ]
     }
   ],
   "timeline": [

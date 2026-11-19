@@ -34,6 +34,18 @@
         "Decap CMS"
       ],
       "image": "/images/uploads/2838.jpg"
+    },
+    {
+      "title": "Cloud-based Attendance Tracker",
+      "description": "A privacy-focused web app to track daily college attendance with a visual calendar, percentage calculator, and automated holiday management. Data syncs securely across devices using Supabase.",
+      "link": "https://farhanlabib.dpdns.org/attendance-cloud.html",
+      "image": "/images/uploads/2841.jpg",
+      "tags": [
+        "JavaScript",
+        "Supabase",
+        "PWA",
+        "Cloud Database"
+      ]
     }
   ],
   "timeline": [

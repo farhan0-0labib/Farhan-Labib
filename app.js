@@ -29,7 +29,7 @@ const sortedPosts=()=>[...(siteData.posts||[])].sort((a,b)=>String(b.date).local
 
 function nav(){
   const cur=location.pathname.split('/').pop()||'index.html';
-  const links=[['Home','index.html'],['About','about.html'],['Projects','projects.html'],['Blog','blog.html'],['Social','social.html'],['Routine','routine.html'],['Contact','contact.html'],['Attendance','attendance-cloud.html']];
+  const links=[['Home','index.html'],['About','about.html'],['Attendance','attendance-cloud.html'],['Projects','projects.html'],['Blog','blog.html'],['Social','social.html'],['Routine','routine.html'],['Contact','contact.html']];
   return `${siteData.announcement?`<div class="banner">${esc(siteData.announcement)} ${siteData.announcementLink?`<a href="${esc(safeUrl(siteData.announcementLink))}">Learn more →</a>`:''}</div>`:''}
   <header><nav><a class="brand" href="index.html">${esc((siteData.name||'Farhan').split(' ')[0])}<span>.</span></a>
   <button class="icon-btn menu-btn" aria-label="Menu" onclick="document.querySelector('.navlinks').classList.toggle('open')">☰</button>
@@ -52,10 +52,33 @@ const skillsBlock=()=>(siteData.skills||[]).length?`<section class="reveal"><h2 
 const timelineBlock=()=>(siteData.timeline||[]).length?`<section class="reveal"><h2 class="section-title">Journey</h2><div class="timeline">${siteData.timeline.map(t=>`<div class="t-item"><div class="post-date">${esc(t.year)}</div><h3>${esc(t.title)}</h3><p class="muted">${esc(t.text||'')}</p></div>`).join('')}</div></section>`:'';
 const empty=m=>`<p class="muted">${m}</p>`;
 
+/* ===== Attendance widget (home page) — set show:false to hide it ===== */
+const ATT={show:true,url:'https://fhfqytpubeixinrygmyi.supabase.co',key:'sb_publishable_01Bp2oqptmLLM8lXr_nQeQ_yzEmv2RQ'};
+async function attendanceWidget(){
+  const box=document.getElementById('attw');if(!box)return;
+  if(!ATT.show){box.remove();return;}
+  try{
+    const h={apikey:ATT.key};if(!ATT.key.startsWith('sb_'))h.Authorization='Bearer '+ATT.key;
+    const r=await fetch(`${ATT.url}/rest/v1/attendance_state?id=eq.1&select=data`,{headers:h});
+    if(!r.ok)throw 0;const rows=await r.json();if(!rows.length)throw 0;
+    const S={start:'2026-09-24',target:75,baseAtt:0,baseTot:0,marks:{},holidays:{},...rows[0].data};
+    const pad=n=>String(n).padStart(2,'0'),key=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+    const t=new Date();t.setHours(0,0,0,0);const tk=key(t);let att=+S.baseAtt||0,tot=+S.baseTot||0;
+    const[a,b,c]=S.start.split('-').map(Number);
+    for(let d=new Date(a,b-1,c);d<=t;d.setDate(d.getDate()+1)){
+      if(d.getDay()===5||d.getDay()===6||S.holidays[key(d)]!==undefined)continue;
+      const k=key(d),m=S.marks[k];if(k===tk&&!m)continue;tot++;if(m==='p')att++;
+    }
+    const pct=tot?att/tot*100:0,T=+S.target||75,col=pct>=T?'#22c55e':pct>=T-10?'#f59e0b':'#ef4444';
+    box.innerHTML=`<style>.att-widget{display:flex;align-items:center;gap:18px;padding:18px 22px;max-width:420px;border:1px solid var(--ink);border-top:5px solid var(--accent);border-radius:4px;background:var(--sheet);color:var(--ink);text-decoration:none}.att-widget:hover{border-color:var(--accent);color:var(--ink)}.att-widget b{display:block;font-size:2rem;line-height:1.1}.att-widget span{display:block;font-weight:600}.att-widget small{color:var(--muted)}</style>
+    <a class="att-widget" href="attendance-cloud.html"><svg viewBox="0 0 120 120" width="84" height="84"><circle cx="60" cy="60" r="52" fill="none" stroke="#b9c6d1" stroke-width="10"/><circle cx="60" cy="60" r="52" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round" stroke-dasharray="326.7" stroke-dashoffset="${326.7*(1-pct/100)}" transform="rotate(-90 60 60)"/></svg><div><b>${tot?pct.toFixed(1)+'%':'—'}</b><span>College attendance</span><small>${att} of ${tot} days · target ${T}%</small></div></a>`;
+  }catch(e){box.remove();}
+}
+
 function render(){
   const page=document.body.dataset.page,posts=sortedPosts();let c='';
   if(page==='home'){
-    c=`<section class="hero"><div><div class="eyebrow">Welcome to my personal website</div><h1>Hello, I’m <span class="gradient">${esc(siteData.name)}</span></h1><p class="typed"><span id="type"></span><i class="caret"></i></p><p class="lead">${esc(siteData.tagline)}</p><a class="button" href="about.html">More about me</a> <a class="button secondary" href="blog.html">Read my blog</a></div>${photo()}</section>${statsBlock()}
+    c=`<section class="hero"><div><div class="eyebrow">Welcome to my personal website</div><h1>Hello, I’m <span class="gradient">${esc(siteData.name)}</span></h1><p class="typed"><span id="type"></span><i class="caret"></i></p><p class="lead">${esc(siteData.tagline)}</p><a class="button" href="about.html">More about me</a> <a class="button secondary" href="blog.html">Read my blog</a></div>${photo()}</section>${statsBlock()}<section id="attw" class="reveal"></section>
     ${(siteData.projects||[]).length?`<section><h2 class="section-title">Featured projects</h2><div class="grid">${siteData.projects.slice(0,2).map(projectCard).join('')}</div><p><a href="projects.html">All projects →</a></p></section>`:''}
     ${skillsBlock()}<section><h2 class="section-title">Latest from the blog</h2><div class="grid">${posts.slice(0,2).map(postCard).join('')||empty('New posts will appear here.')}</div></section>`;
   }else if(page==='about'){
@@ -75,6 +98,7 @@ function render(){
   }
   document.getElementById('app').innerHTML=nav()+`<main class="wrap">${c}</main>`+footer();
   if(page==='blog')blogFilter(posts);
+  if(page==='home')attendanceWidget();
   wire();
 }
 function blogFilter(posts){
@@ -102,8 +126,8 @@ function wire(){
   const cp=document.getElementById('copy');if(cp)cp.onclick=async()=>{try{await navigator.clipboard.writeText(siteData.email);cp.textContent='Copied ✓';}catch(e){}};
 }
 (async()=>{
-  try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'dark';}catch(e){document.documentElement.dataset.theme='dark';}
+  try{document.documentElement.dataset.theme=localStorage.getItem('theme')||'light';}catch(e){document.documentElement.dataset.theme='light';}
   siteData=await getData();
-  document.documentElement.style.setProperty('--accent',siteData.accent||'#8b5cf6');
+  if(siteData.accent&&siteData.accent.toLowerCase()!=='#8b5cf6')document.documentElement.style.setProperty('--accent',siteData.accent); // old purple default = not customised, keep the new design's pink
   render();
 })();

@@ -35,6 +35,15 @@
       "message": "Today Or Tomorrow you have buy ticket",
       "date": "2026-12-02",
       "time": "18:55"
+    },
+    {
+      "icon": "🎟🎟",
+      "repeat": "date",
+      "active": true,
+      "title": "Have to buy ticket (For 13 Nov)",
+      "message": "Buy Train ticket",
+      "date": "2026-12-03",
+      "time": "18:55"
     }
   ]
 }

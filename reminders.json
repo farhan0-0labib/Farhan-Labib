@@ -26,6 +26,15 @@
       "message": "Today is 13th day.\nIf any message didn't come, contact to Dutch Bangla Bank\n\n                                                      -Farhan Labib",
       "date": "2026-11-22",
       "time": "12:00"
+    },
+    {
+      "icon": "🎫",
+      "repeat": "date",
+      "active": true,
+      "title": "Have to buy ticket",
+      "message": "Today Or Tomorrow you have buy ticket",
+      "date": "2026-12-02",
+      "time": "18:55"
     }
   ]
 }
